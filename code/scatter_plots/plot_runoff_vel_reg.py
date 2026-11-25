@@ -1,5 +1,4 @@
 # Summer runoff vs winter velocity
-# needs the MAR daily runoff csv from fig_return_period_runoff_increase.py
 
 import os
 import sys
@@ -385,10 +384,6 @@ b2 = ax_d2.bar(stat_years + width / 2, n_extreme, width=width, color=aut_cols, a
 ax_d2.set_ylabel('Extreme melt\nevents (count)', fontsize=FONT)
 ax_d2.set_ylim(bottom=0)
 ax_d2.grid(False)
-
-ax_d.axvline(EVENT_YEAR - 0.5, color='#D62728', linewidth=1.4, linestyle='--', alpha=0.75, zorder=5)
-ax_d.text(EVENT_YEAR - 0.4, 1.03, 'August 2021', transform=ax_d.get_xaxis_transform(),
-          fontsize=FONT_SM, color='#D62728', style='italic', va='bottom', ha='left', clip_on=False)
 
 ax_d.set_xticks(stat_years)
 ax_d.set_xticklabels([str(yr) for yr in YEARS], rotation=45, ha='right')

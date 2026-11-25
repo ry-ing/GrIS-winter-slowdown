@@ -1,5 +1,4 @@
-# Aug 2021 melt event, plus an extra figure of runoff by elevation
-# slow, MAR panels are cached
+# Aug 2021 melt event, plus an extra fig of runoff by elevation
 
 import os
 import sys

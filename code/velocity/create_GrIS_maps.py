@@ -1,5 +1,4 @@
 # GrIS-wide slowdown map
-# PLOT_ONLY = False to recompute the grids (slow)
 
 import os
 import sys

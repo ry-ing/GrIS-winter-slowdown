@@ -43,6 +43,7 @@ FS_ANNOT = 22
 FS_CBAR = 24
 FS_LETTER = 28
 FS_ELEV = 14
+SCALEBAR_LW = 3.5   # pt, stem width of DejaVu Sans Bold at FS_ANNOT - 2 (20 pt)
 
 PCT_LABEL_DAYS_OFFSET = -7
 
@@ -140,21 +141,28 @@ def draw_map_panel(ax, geom, name, extent, zoom, anom_da, recovery_da):
             zorder=9, bbox=dict(facecolor='white', alpha=0.88, edgecolor='crimson', boxstyle='circle,pad=0.2',
                                 linewidth=1.0))
 
-    # add scale bar suitable for the zoom level
+    # 10 km scale bar, SCALEBAR_LW matches the stroke of the bold label
     scalebar_len = 10_000
     scalebar_label = '10 km'
 
-    xmin, xmax, ymin, ymax = extent
-    panel_w = xmax - xmin # xmin, xmax is the extent of the map panel in meters
+    panel_w = xmax - xmin
     panel_h = ymax - ymin
-    sb_x = xmin + 0.05 * panel_w #- scalebar_len * 1.05
+    sb_x = xmin + 0.05 * panel_w
     sb_y = ymin + 0.06 * panel_h
+    if name == 'M1':   # centred, the label runs off the panel edge otherwise
+        sb_x = (xmin + xmax) / 2 - scalebar_len / 2
     tick_h = 0.012 * panel_h
-    stroke = [pe.withStroke(linewidth=4.5, foreground='white')]
-    ax.plot([sb_x, sb_x + scalebar_len], [sb_y, sb_y], color='black', linewidth=2.0, transform=PROJ_3413, zorder=9, solid_capstyle='butt', path_effects=stroke)
-    ax.plot([sb_x, sb_x], [sb_y - tick_h, sb_y + tick_h], color='black', linewidth=2.0, transform=PROJ_3413, zorder=9, path_effects=stroke)
-    ax.plot([sb_x + scalebar_len, sb_x + scalebar_len], [sb_y - tick_h, sb_y + tick_h], color='black', linewidth=2.0, transform=PROJ_3413, zorder=9, path_effects=stroke)
-    ax.text(sb_x + scalebar_len / 2, sb_y + (ymax - ymin) * 0.02, scalebar_label, transform=PROJ_3413, fontsize=FS_ANNOT - 2, fontweight='bold', ha='center', va='bottom', zorder=9)
+    stroke = [pe.withStroke(linewidth=SCALEBAR_LW + 2.5, foreground='white')]
+    xs = [sb_x, sb_x + scalebar_len]
+    for path in [(xs, [sb_y, sb_y]), ([xs[0], xs[0]], [sb_y - tick_h, sb_y + tick_h]),
+                 ([xs[1], xs[1]], [sb_y - tick_h, sb_y + tick_h])]:
+        ax.plot(path[0], path[1], color='black', linewidth=SCALEBAR_LW, transform=PROJ_3413, zorder=9,
+                solid_capstyle='butt', path_effects=stroke)
+    # redraw the bar without the outline so the tick outlines do not cut into it
+    ax.plot(xs, [sb_y, sb_y], color='black', linewidth=SCALEBAR_LW, transform=PROJ_3413, zorder=9.1,
+            solid_capstyle='butt')
+    ax.text(sb_x + scalebar_len / 2, sb_y + panel_h * 0.02, scalebar_label, transform=PROJ_3413,
+            fontsize=FS_ANNOT - 2, fontweight='bold', ha='center', va='bottom', zorder=9)
 
     gl = ax.gridlines(draw_labels=True, linewidth=0, x_inline=False, y_inline=False)
     gl.top_labels = True
@@ -284,5 +292,5 @@ cbar = fig.colorbar(im_ref, cax=cbar_ax, orientation='horizontal', extend='min')
 cbar.set_label('Winter 2021/22 velocity anomaly (%)', fontsize=FS_CBAR - 4, labelpad=5)
 cbar.ax.tick_params(labelsize=FS_TICK - 6)
 
-out = os.path.join(OUTPUT_DIR, 'Fig09_mtg_velocity_tseries.png')
+out = os.path.join(OUTPUT_DIR, 'Fig10_mtg_velocity_tseries.png')
 plt.savefig(out, dpi=300, bbox_inches='tight')

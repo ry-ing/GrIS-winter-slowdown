@@ -1,4 +1,4 @@
-# Recovery vs slowdown at each ROI, run prepare_vel_scatter_data.py first
+# Recovery vs slowdown at each ROI, needs prep scatter data to be run first
 
 import os
 import sys
@@ -24,7 +24,7 @@ OUTPUT_DIR = config.FIG_DIR
 MIN_W1_SLOWDOWN_PCT = 1.0   # %
 
 PIX_W1_MIN = 7.5       # % - pixels need W1 below -7.5 %
-BIN_WIDTH = 2.5        # % - width of the W1 bins in panel (c)
+BIN_WIDTH = 2.5        # % - width of the W1 bins in panel (b)
 BIN_MIN = 7.5
 BIN_MAX = 40.0
 MIN_PIX_PER_BIN = 200
@@ -41,7 +41,7 @@ cmap = plt.cm.YlGnBu
 BAR_COLORS = {1: cmap(0.15), 2: cmap(0.38), 3: cmap(0.62), 5: cmap(0.87)}
 BAR_LABELS = {1: '1', 2: '2', 3: '3', 5: '>4'}
 
-# colours for panel (b)
+# colours for panel (a)
 COLOR_NORMAL = '#31C950'
 COLOR_CENSORED = cmap(0.87)
 
@@ -83,7 +83,7 @@ dur_pix[w2 >= RECOVERY_THRESHOLD_PCT] = 1
 n_total = len(w1_pix)
 print(n_total, 'pixels')
 
-# bin the pixels by W1 for panel (c)
+# bin the pixels by W1 for panel (b)
 bins = np.arange(BIN_MIN, BIN_MAX + BIN_WIDTH, BIN_WIDTH)
 bin_centers = (bins[:-1] + bins[1:]) / 2
 n_bins = len(bin_centers)
@@ -103,46 +103,8 @@ valid_bins = n_count >= MIN_PIX_PER_BIN
 fig, axes = plt.subplots(1, 3, figsize=(16, 4.8), gridspec_kw={'wspace': 0.2})
 
 
-# (a) baseline velocity vs recovery slope
+# (a) recovery duration vs W1 anomaly
 ax = axes[0]
-plot_df = roi_df[(roi_df['W1_anom_pct'] < -MIN_W1_SLOWDOWN_PCT) & roi_df['recovery_slope'].notna()].copy()
-
-for i, row in plot_df.iterrows():
-    lbl = int(row['roi_label'])
-    x = row['baseline_vel']
-    y = row['recovery_slope']
-    se = row['recovery_slope_se']
-    if not np.isfinite(se):
-        se = 0
-    ax.errorbar(x, y, yerr=se, fmt='o', color='dodgerblue', markersize=7,
-                capsize=3, elinewidth=1.2, markeredgecolor='k',
-                markeredgewidth=0.7, zorder=4)
-    ax.annotate(f'L{lbl}', xy=(x, y), xytext=(6, 1),
-                textcoords='offset points', fontsize=FS_ANNOT,
-                fontweight='bold', color='#1a4f8a', va='center')
-
-xf = plot_df['baseline_vel'].values
-yf = plot_df['recovery_slope'].values
-res = stats.linregress(xf, yf)
-xl = np.linspace(xf.min(), xf.max(), 200)
-ax.plot(xl, res.slope * xl + res.intercept, color='black', linewidth=1.3, linestyle='--', alpha=0.8, zorder=3)
-ax.text(0.97, 0.05, f'R²={res.rvalue**2:.2f},  p={res.pvalue:.2f}',
-        transform=ax.transAxes, ha='right', va='bottom',
-        fontsize=FS_ANNOT, color='#333333',
-        bbox=dict(boxstyle='round,pad=0.3', facecolor='white', edgecolor='k', alpha=0.75), zorder=5)
-
-ax.set_xlabel('Pre-event baseline winter velocity (m yr$^{-1}$)', fontsize=FS_LABEL)
-ax.set_ylabel('Recovery slope (m yr$^{-1}$ per winter)', fontsize=FS_LABEL)
-ax.tick_params(labelsize=FS_TICK)
-ax.spines['top'].set_visible(False)
-ax.spines['right'].set_visible(False)
-ax.grid(True, alpha=0.3, linewidth=0.6, color='#888888', linestyle=':')
-ax.text(0.02, 0.98, '(a)', transform=ax.transAxes, fontsize=FS_LETTER, fontweight='bold', va='top', ha='left',
-        path_effects=[pe.withStroke(linewidth=2.5, foreground='white')])
-
-
-# (b) recovery duration vs W1 anomaly
-ax = axes[1]
 
 plot_df_b = roi_df[roi_df['W1_anom_pct'] < -MIN_W1_SLOWDOWN_PCT].copy()
 # not recovered (5) is plotted at 4.5
@@ -189,7 +151,7 @@ ax.plot(xl, res.slope * xl + res.intercept, color='black', linewidth=1.3, linest
 
 # spearman rank
 rho, p_rho = stats.spearmanr(xv, plot_df_b['years_to_recover'].values)
-ax.text(0.97, 0.05, f'ρ={rho:.2f},  p={p_rho:.2f}',
+ax.text(0.97, 0.05, f'Spearman ρ={rho:.2f},  p={p_rho:.2f}',
         transform=ax.transAxes, ha='right', va='bottom',
         fontsize=FS_ANNOT, color='#333333',
         bbox=dict(boxstyle='round,pad=0.3', facecolor='white', edgecolor='k', alpha=0.75), zorder=5)
@@ -203,12 +165,12 @@ ax.tick_params(labelsize=FS_TICK)
 ax.spines['top'].set_visible(False)
 ax.spines['right'].set_visible(False)
 ax.grid(True, alpha=0.3, linewidth=0.6, color='#888888', linestyle=':')
-ax.text(0.02, 0.98, '(b)', transform=ax.transAxes, fontsize=FS_LETTER, fontweight='bold', va='top', ha='left',
+ax.text(0.02, 0.98, '(a)', transform=ax.transAxes, fontsize=FS_LETTER, fontweight='bold', va='top', ha='left',
         path_effects=[pe.withStroke(linewidth=2.5, foreground='white')])
 
 
-# pixel proportions
-ax = axes[2]
+# (b) pixel proportions
+ax = axes[1]
 
 bottoms = np.zeros(n_bins)
 for d in [1, 2, 3, 5]:
@@ -247,10 +209,48 @@ ax.tick_params(labelsize=FS_TICK)
 ax.spines['top'].set_visible(False)
 ax.spines['right'].set_visible(False)
 ax.grid(True, alpha=0.3, linewidth=0.6, color='#888888', linestyle=':')
+ax.text(0.02, 0.98, '(b)', transform=ax.transAxes, fontsize=FS_LETTER, fontweight='bold', va='top', ha='left',
+        path_effects=[pe.withStroke(linewidth=2.5, foreground='white')])
+
+
+# (c) baseline velocity vs recovery slope
+ax = axes[2]
+plot_df = roi_df[(roi_df['W1_anom_pct'] < -MIN_W1_SLOWDOWN_PCT) & roi_df['recovery_slope'].notna()].copy()
+
+for i, row in plot_df.iterrows():
+    lbl = int(row['roi_label'])
+    x = row['baseline_vel']
+    y = row['recovery_slope']
+    se = row['recovery_slope_se']
+    if not np.isfinite(se):
+        se = 0
+    ax.errorbar(x, y, yerr=se, fmt='o', color='dodgerblue', markersize=7,
+                capsize=3, elinewidth=1.2, markeredgecolor='k',
+                markeredgewidth=0.7, zorder=4)
+    ax.annotate(f'L{lbl}', xy=(x, y), xytext=(6, 1),
+                textcoords='offset points', fontsize=FS_ANNOT,
+                fontweight='bold', color='#1a4f8a', va='center')
+
+xf = plot_df['baseline_vel'].values
+yf = plot_df['recovery_slope'].values
+res = stats.linregress(xf, yf)
+xl = np.linspace(xf.min(), xf.max(), 200)
+ax.plot(xl, res.slope * xl + res.intercept, color='black', linewidth=1.3, linestyle='--', alpha=0.8, zorder=3)
+ax.text(0.97, 0.05, f'R²={res.rvalue**2:.2f},  p={res.pvalue:.2f}',
+        transform=ax.transAxes, ha='right', va='bottom',
+        fontsize=FS_ANNOT, color='#333333',
+        bbox=dict(boxstyle='round,pad=0.3', facecolor='white', edgecolor='k', alpha=0.75), zorder=5)
+
+ax.set_xlabel('Pre-event baseline winter velocity (m yr$^{-1}$)', fontsize=FS_LABEL)
+ax.set_ylabel('Recovery slope (m yr$^{-1}$ per winter)', fontsize=FS_LABEL)
+ax.tick_params(labelsize=FS_TICK)
+ax.spines['top'].set_visible(False)
+ax.spines['right'].set_visible(False)
+ax.grid(True, alpha=0.3, linewidth=0.6, color='#888888', linestyle=':')
 ax.text(0.02, 0.98, '(c)', transform=ax.transAxes, fontsize=FS_LETTER, fontweight='bold', va='top', ha='left',
         path_effects=[pe.withStroke(linewidth=2.5, foreground='white')])
 
 plt.subplots_adjust(top=0.83)
-out = os.path.join(OUTPUT_DIR, 'Fig08_scatter_plots.png')
+out = os.path.join(OUTPUT_DIR, 'Fig09_scatter_plots.png')
 plt.savefig(out, dpi=300, bbox_inches='tight')
 plt.close(fig)

@@ -1,4 +1,4 @@
-# Ice discharge through the flux gates (drawn in QGIS, flux_gates_manual.gpkg)
+# Ice discharge through the flux gates (drawn manually in QGIS, flux_gates_manual.gpkg)
 
 import os
 import sys
@@ -39,14 +39,14 @@ MANUAL_GATES_PATH = os.path.join(OUTPUT_DIR, 'flux_gates_manual.gpkg')
 
 SELECTED_ROI_LABELS = config.ROI_LABELS
 
-RHO_ICE = 917.0   # kg m-3
-PIXEL_W = 200.0   # m
+RHO_ICE = 917.0   # kg m-3 ice densituy
+PIXEL_W = 200.0   # m for s1 promice velocities v4
 REGION_BOX = {'minx': -320_000.0, 'miny': -2_620_000.0, 'maxx': -130_000.0, 'maxy': -2_270_000.0}
 MIN_SNR_THRESHOLD = 5.0
 MIN_GATE_COVERAGE = 0.70   # skip timestep if less of the gate has velocity
 
-# True = hold thickness at BedMachine so discharge only changes with velocity
-# False = GIMP 2007 thickness + Khan et al. thinning
+# True = hold thickness at Bedmachine so discharge only changes with velocity
+# False = GIMP 2007 thickness + Khan et al. thinning so that ice thickness changes
 FIXED_THICKNESS = True
 
 EVENT_DATE = pd.Timestamp('2021-08-14')
@@ -63,7 +63,7 @@ SLURM_CONFIG = {
     'job_extra_directives': ['--job-name=ice-discharge', f'--nodelist={socket.gethostname().split(".")[0]}'],
 }
 
-# datastore reads sometimes fail, retry
+# datastore reads sometimes fail
 def compute_with_retry(lazy, name):
     for attempt in range(1, 6):
         try:
@@ -246,7 +246,7 @@ fig.savefig(gate_fig, dpi=150, bbox_inches='tight')
 plt.close(fig)
 
 
-# thinning (Khan et al., m/month)
+# thinning (Khan et al m/month)
 thinning = xr.open_dataset(THINNING_PATH, chunks={'time': 12, 'x': 500, 'y': 500})['dhdt_vol']
 thin_time = pd.to_datetime(thinning.time.values)
 
@@ -308,7 +308,7 @@ for lbl in sorted(gate_pixels):
 
     H_time = np.clip(H_time, 0.0, 5000.0)
 
-    # BedMachine thickness, fixed in time
+    # Bedmachine thickness, fixed in time
     H_fixed = np.zeros(n_pix)
     for i in range(n_pix):
         val = float(H_bm.interp(x=pixels[i][0], y=pixels[i][1], method='nearest').values)
@@ -324,7 +324,7 @@ for lbl in sorted(gate_pixels):
     else:
         H_use = H_time
 
-    # BedMachine bed error used as thickness error
+    # Bedmachine bed error used as thickness error
     sigH = np.zeros(n_pix)
     for i in range(n_pix):
         val = float(errbed.interp(x=pixels[i][0], y=pixels[i][1], method='nearest').values)

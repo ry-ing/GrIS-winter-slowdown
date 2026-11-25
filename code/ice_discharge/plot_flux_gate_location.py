@@ -74,7 +74,6 @@ mask_var = list(mask_ds.data_vars)[0]
 mask = xr.where(mask_ds[mask_var] == 2, 1, 0).squeeze().interp_like(vel, method="nearest")
 surface = xr.open_dataset(BEDMACHINE_PATH)["surface"].squeeze().interp_like(vel, method="linear")
 
-# same size window for all panels
 roi_ids = sorted(SELECTED_ROI_LABELS)
 roi_geoms = {}
 for r in roi_ids:

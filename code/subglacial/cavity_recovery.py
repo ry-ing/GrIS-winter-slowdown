@@ -83,6 +83,11 @@ f_min = f_all[rec_all == 3].min()
 f_max = f_all[rec_all == 3].max()
 print(f"3 winter recovery: f = {f_min * 100:.0f}% to {f_max * 100:.0f}%")
 
+# water left in the cavities after the event
+left_min = (1.0 - f_max) * S_PRE
+left_max = (1.0 - f_min) * S_PRE
+print(f"water left after the event {left_min * 100:.1f} to {left_max * 100:.1f} cm w.e. (of {S_PRE * 100:.1f})")
+
 # effective pressure and bed contact for f = 0.30
 N_new = N_CAL * 0.7**(-2.0 / 3.0)
 c_pre = 1.0 - Lc_pre / LS
@@ -96,6 +101,9 @@ m_supp = melt_rate(U_SUPP, RHO_I)
 deficit = TAU_B * (U_BASE - U_SUPP) / (RHO_W * L_FUS) * WINTER_FRAC * 100
 print(f"melt {m_pre * 100:.2f} -> {m_supp * 100:.2f} cm/yr ice ({(m_pre - m_supp) / m_pre * 100:.1f}% less), "
       f"winter deficit {deficit:.2f} cm w.e.")
+
+
+print(f"melt {melt_rate(U_BASE) * 100:.2f} -> {melt_rate(U_SUPP) * 100:.2f} cm w.e./yr")
 
 
 # figures

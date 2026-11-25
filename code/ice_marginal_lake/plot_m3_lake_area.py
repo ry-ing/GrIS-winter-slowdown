@@ -1,5 +1,4 @@
 # M3 lake drainage, Sentinel-1 images and lake area
-# lake data from GrIML (How et al., 2025)
 
 import os
 import sys

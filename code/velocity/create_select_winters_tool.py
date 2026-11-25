@@ -1,5 +1,4 @@
-# HTML tool for picking the winter windows
-# save the downloaded winter_windows.json in data/derived/velocity/
+# HTML tool for picking the winter windows from timeseries 
 
 import os
 import sys
@@ -22,94 +21,35 @@ HTML = r"""<!DOCTYPE html>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-annotation/3.0.1/chartjs-plugin-annotation.min.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;600&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#0f1117;--surface:#181d27;--border:#2a3245;--text:#e2e8f2;--muted:#6b7a99;
-      --accent:#4a9eff;--win-bg:rgba(74,158,255,.14);--win-bd:rgba(74,158,255,.7);
-      --mono:'IBM Plex Mono',monospace;--sans:'IBM Plex Sans',sans-serif}
-*{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);color:var(--text);font-family:var(--sans);font-weight:300;
-     min-height:100vh;display:flex;flex-direction:column}
-header{padding:14px 24px 10px;border-bottom:1px solid var(--border);
-       display:flex;align-items:baseline;gap:16px;flex-wrap:wrap}
-header h1{font-family:var(--mono);font-size:13px;font-weight:600;letter-spacing:.12em;
-          text-transform:uppercase;color:var(--accent)}
-header p{font-size:11px;color:var(--muted);flex:1}
-.toolbar{padding:8px 24px;display:flex;align-items:center;gap:8px;
-         border-bottom:1px solid var(--border);flex-wrap:wrap}
-.roi-nav{display:flex;align-items:center;gap:5px}
-button{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.07em;
-       text-transform:uppercase;padding:5px 12px;border:1px solid var(--border);
-       background:var(--surface);color:var(--text);cursor:pointer;transition:all .15s;border-radius:3px}
-button:hover{border-color:var(--accent);color:var(--accent)}
-button.primary{background:var(--accent);border-color:var(--accent);color:#0f1117}
-button.primary:hover{opacity:.85}
-button.danger{border-color:#ef4444;color:#ef4444}
-button.danger:hover{background:#ef4444;color:#0f1117}
-#roi-label{font-family:var(--mono);font-size:17px;font-weight:600;min-width:60px;text-align:center}
-.spacer{flex:1}
-#status{font-family:var(--mono);font-size:10px;color:var(--muted);padding:3px 8px;
-        background:var(--surface);border:1px solid var(--border);border-radius:3px}
-.chart-wrap{flex:1;min-height:360px;padding:8px 24px 6px}
-#chartCanvas{cursor:crosshair;width:100%!important;height:100%!important}
-.windows-panel{padding:8px 24px 10px;border-top:1px solid var(--border);
-               display:flex;gap:8px;flex-wrap:wrap;align-items:center;min-height:44px}
-.win-tag{font-family:var(--mono);font-size:10px;padding:3px 9px;
-         background:var(--win-bg);border:1px solid var(--win-bd);border-radius:3px;
-         color:var(--accent);cursor:pointer;display:flex;align-items:center;gap:5px;transition:all .15s}
-.win-tag:hover{background:rgba(74,158,255,.32)}
-.win-tag .del{color:var(--muted);font-size:12px;line-height:1}
-.win-tag:hover .del{color:#ef4444}
-.no-windows{color:var(--muted);font-size:11px;font-family:var(--mono)}
-footer{padding:10px 24px;border-top:1px solid var(--border);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-#json-out{font-family:var(--mono);font-size:9.5px;background:var(--surface);
-          border:1px solid var(--border);color:var(--text);padding:7px 10px;flex:1;
-          max-height:68px;resize:vertical;border-radius:3px;overflow-y:auto;white-space:pre}
-.legend{display:flex;gap:14px;padding:2px 24px 4px;flex-wrap:wrap}
-.leg-item{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--muted)}
-.leg-line{width:20px;height:2px}
-.leg-dot{width:7px;height:7px;border-radius:50%}
+body{font-family:sans-serif;font-size:13px;margin:10px}
+.chart-wrap{height:500px}
+#chartCanvas{cursor:crosshair}
+.win-tag{cursor:pointer;border:1px solid #888;padding:2px 6px;margin-right:6px}
+#json-out{width:100%;height:80px}
 </style>
 </head>
 <body>
-<header>
-  <h1>Winter Window Selector - Ice Velocity</h1>
-  <p>Click-drag to mark a winter window &nbsp;·&nbsp; Click a tag to delete it
-  &nbsp;·&nbsp; ◀ ▶ or arrow keys to navigate ROIs &nbsp;·&nbsp;
-  Baseline / W1–W4 classification is automatic in the plot script</p>
-</header>
-<div class="toolbar">
-  <div class="roi-nav">
-    <button onclick="navigate(-1)">◀</button>
-    <span id="roi-label"></span>
-    <button onclick="navigate(1)">▶</button>
-  </div>
-  <span id="roi-info" style="font-family:var(--mono);font-size:10px;color:var(--muted)"></span>
-  <div class="spacer"></div>
-  <button class="danger" onclick="clearCurrentROI()">Clear ROI</button>
+<p>Click-drag to mark a winter window. Click a window below the plot to delete it.
+Arrow keys (or p/n) change ROI. Baseline / W1-W4 classification is automatic in the plot script.</p>
+<div>
+  <button onclick="navigate(-1)">&lt;</button>
+  <b id="roi-label"></b>
+  <button onclick="navigate(1)">&gt;</button>
+  <span id="roi-info"></span>
+  <button onclick="clearCurrentROI()">Clear ROI</button>
   <span id="status">ready</span>
 </div>
-<div class="legend">
-  <div class="leg-item"><div class="leg-line" style="background:#4a9eff"></div>Smoothed</div>
-  <div class="leg-item"><div class="leg-dot" style="background:#6b7a99"></div>Raw</div>
-  <div class="leg-item">
-    <div class="leg-line" style="background:rgba(255,255,255,.35);border-top:1.5px dashed rgba(255,255,255,.4);width:20px"></div>
-    Aug 2021 event
-  </div>
-  <div class="leg-item">
-    <div style="width:18px;height:12px;background:var(--win-bg);border:1px solid var(--win-bd);border-radius:2px"></div>
-    Selected window
-  </div>
-</div>
+<p>Blue line: smoothed, grey dots: raw, dashed line: Aug 2021 event, shaded: selected windows</p>
 <div class="chart-wrap"><canvas id="chartCanvas"></canvas></div>
-<div class="windows-panel" id="windows-panel">
-  <span class="no-windows">No windows selected for this ROI</span>
+<div id="windows-panel">
+  No windows selected for this ROI
 </div>
-<footer>
-  <button class="primary" onclick="copyJSON()">Copy JSON</button>
+<div>
+  <button onclick="copyJSON()">Copy JSON</button>
   <button onclick="downloadJSON()">Download JSON</button>
   <textarea id="json-out" readonly placeholder="JSON will appear here..."></textarea>
-</footer>
+</div>
 
 <script>
 const ALL_DATA   = __DATA_PLACEHOLDER__;
@@ -143,7 +83,7 @@ function buildAnnotations(lbl) {
   const anns = {};
   anns.event = {
     type: 'line', xMin: tsMs(EVENT_DATE), xMax: tsMs(EVENT_DATE),
-    borderColor: 'rgba(255,255,255,0.4)', borderWidth: 1.5, borderDash: [5, 4],
+    borderColor: 'black', borderWidth: 1.5, borderDash: [5, 4],
   };
   (windows[lbl] || []).forEach((w, i) => {
     anns[`w${i}`] = {
@@ -164,9 +104,9 @@ function renderChart(lbl) {
   const cfg = {
     type: 'line',
     data: { datasets: [
-      { label:'Smoothed', data:smooth, borderColor:'#4a9eff', borderWidth:2.2,
+      { label:'Smoothed', data:smooth, borderColor:'dodgerblue', borderWidth:2,
         pointRadius:0, tension:0.25, order:1 },
-      { label:'Raw', data:raw, borderColor:'transparent', backgroundColor:'#8899bb88',
+      { label:'Raw', data:raw, borderColor:'transparent', backgroundColor:'grey',
         pointRadius:2.2, pointStyle:'circle', showLine:false, order:2 },
     ]},
     options: {
@@ -176,24 +116,16 @@ function renderChart(lbl) {
         x: {
           type:'time', min:X_MIN, max:X_MAX,
           time:{ unit:'year', displayFormats:{ year:'yyyy' } },
-          grid:{ color:'#1e2535' },
-          ticks:{ color:'#6b7a99', font:{ family:'IBM Plex Mono', size:10 }, maxTicksLimit:11 },
+          ticks:{ maxTicksLimit:11 },
         },
         y: {
-          grid:{ color:'#1e2535' },
-          ticks:{ color:'#6b7a99', font:{ family:'IBM Plex Mono', size:10 } },
-          title:{ display:true, text:'Ice speed (m yr\u207b\u00b9)', color:'#6b7a99',
-                  font:{ family:'IBM Plex Sans', size:11 } },
+          title:{ display:true, text:'Ice speed (m yr\u207b\u00b9)' },
         },
       },
       plugins: {
         legend:{ display:false },
         tooltip:{
           mode:'nearest', intersect:false,
-          backgroundColor:'#181d27', borderColor:'#2a3245', borderWidth:1,
-          titleColor:'#e2e8f2', bodyColor:'#8899bb',
-          titleFont:{ family:'IBM Plex Mono', size:10 },
-          bodyFont:{ family:'IBM Plex Mono', size:10 },
           callbacks:{
             title: items => new Date(items[0].parsed.x).toISOString().slice(0,10),
             label: item  => ` ${item.parsed.y?.toFixed(1)} m/yr`,
@@ -287,12 +219,12 @@ function updateWindowPanel(lbl) {
   const panel = document.getElementById('windows-panel');
   const wins  = windows[lbl] || [];
   if (!wins.length) {
-    panel.innerHTML = '<span class="no-windows">No windows selected for this ROI</span>';
+    panel.innerHTML = 'No windows selected for this ROI';
     return;
   }
   panel.innerHTML = wins.map((w, i) =>
     `<span class="win-tag" onclick="deleteWindow(${lbl},${i})" title="Click to delete">
-      ${fmtDate(w[0])} \u2192 ${fmtDate(w[1])}<span class="del">✕</span>
+      ${fmtDate(w[0])} \u2192 ${fmtDate(w[1])} x
     </span>`).join('');
 }
 
@@ -335,8 +267,8 @@ function save() {
 function copyJSON() {
   const txt = document.getElementById('json-out').value;
   navigator.clipboard.writeText(txt).then(
-    ()  => setStatus('\u2713 copied'),
-    ()  => { document.getElementById('json-out').select(); document.execCommand('copy'); setStatus('\u2713 copied'); }
+    ()  => setStatus('copied'),
+    ()  => { document.getElementById('json-out').select(); document.execCommand('copy'); setStatus('copied'); }
   );
 }
 

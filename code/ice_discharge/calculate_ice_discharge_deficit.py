@@ -1,4 +1,4 @@
-# Winter discharge deficit at each gate, run calculate_ice_discharge.py first
+# Winter discharge deficit at each gate, needs calculate ice discharge to be run first
 
 import os
 import sys
@@ -26,14 +26,12 @@ SEC_YR = 3.154e7
 PLOT_XMIN = pd.Timestamp('2016-01-01')
 PLOT_XMAX = pd.Timestamp('2025-06-01')
 
-
-# winter is labelled by the year it ends in
 def season_year(t):
     if t.month >= 11:
         return t.year + 1
     return t.year
 
-# error on the mean, sqrt(sum(sigma^2)) / n
+# error on
 def quad_sigma(errs, n):
     errs = errs[np.isfinite(errs) & (errs >= 0)]
     if len(errs) == 0 or n == 0:
@@ -41,7 +39,7 @@ def quad_sigma(errs, n):
     return float(np.sqrt(np.sum(errs**2))) / n
 
 
-# read the discharge csvs
+# read discharge csvs
 all_dfs = {}
 for lbl in config.ROI_LABELS:
     df = pd.read_csv(os.path.join(OUTPUT_DIR, f'discharge_ROI_{lbl}.csv'))

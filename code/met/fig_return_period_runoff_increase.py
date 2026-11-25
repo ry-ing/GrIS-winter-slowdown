@@ -1,5 +1,4 @@
 # Return periods of the 3-day runoff increase, MAR historical vs MAR-CESM2
-# also makes the daily runoff csvs
 
 import os
 import sys
@@ -179,5 +178,5 @@ plt.legend(frameon=False, loc='upper left')
 plt.gca().tick_params(axis='x', which='major', length=10)
 plt.gca().tick_params(axis='x', which='minor', length=5)
 plt.tight_layout(pad=0.5)
-out_png = OUT_FIG_DIR / 'Fig10_return_period.png'
+out_png = OUT_FIG_DIR / 'Fig11_return_period.png'
 plt.savefig(out_png, dpi=300, bbox_inches='tight')

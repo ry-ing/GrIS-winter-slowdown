@@ -186,7 +186,7 @@ vals[fill] = vals[ny[fill], nx[fill]]
 runoff_change_plot = xr.DataArray(vals, coords=delta_on_bed.coords, dims=delta_on_bed.dims).where(ice)
 
 
-# (b) elevation bands
+# elevation bands
 if os.path.exists(PANEL_B_CACHE) and not REFRESH:
     with xr.open_dataset(PANEL_B_CACHE) as c:
         band_vals = c['band_vals'].values.astype(float)
@@ -284,7 +284,7 @@ ax_map.text((sb_x0 + sb_x1) / 2, sb_y0 + tick_h + 4_000, '100 km', ha='center', 
             fontsize=FONT_SM - 2, fontweight='bold', color='black', transform=PROJ_3413, zorder=21,
             path_effects=[pe.withStroke(linewidth=4, foreground='white')])
 
-# (b) elevation bands in the event year
+# elevation bands in the event year
 ax_elev.set_facecolor('white')
 bottom = np.zeros(N_DAYS_JJA)
 for i in range(len(ELEV_BANDS)):
